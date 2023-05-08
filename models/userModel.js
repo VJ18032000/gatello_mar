@@ -154,8 +154,7 @@ const userSchema = new mongoose.Schema({
     work_experience: [{
         companyName: {
             type: String,
-            required: false,
-            default:""
+            required: false
         },
         location: {
             type: String,
@@ -180,8 +179,7 @@ const userSchema = new mongoose.Schema({
     }],
     skills: {
         type: Array,
-        required: false,
-        default:""
+        required: false
     },
     isFollowing:{
         type:Boolean,
