@@ -148,12 +148,14 @@ const userSchema = new mongoose.Schema({
     }],
     website: {
         type: Array,
-        required: false
+        required: false,
+        // default:""
     },
     work_experience: [{
         companyName: {
             type: String,
-            required: false
+            required: false,
+            default:""
         },
         location: {
             type: String,
@@ -178,7 +180,8 @@ const userSchema = new mongoose.Schema({
     }],
     skills: {
         type: Array,
-        required: false
+        required: false,
+        // default:""
     },
     isFollowing:{
         type:Boolean,
@@ -283,11 +286,16 @@ const userSchema = new mongoose.Schema({
         }
     }],
     resume:{
+        resume:{
         type: String,
         required: false,
         default:""
+        },
+        date:{
+            type:String,
+        }
     },
-    current_address:[{
+    current_address:{
         state: {
             type: String,
             required: false,
@@ -308,8 +316,8 @@ const userSchema = new mongoose.Schema({
             required: false,
             default:""
         },
-    }],
-    permanent_address:[{
+    },
+    permanent_address:{
         state: {
             type: String,
             required: false,
@@ -330,10 +338,7 @@ const userSchema = new mongoose.Schema({
             required: false,
             default:""
         },
-    }]
-    
-
-
+    }
 })
 
 module.exports = mongoose.model('user', userSchema)
