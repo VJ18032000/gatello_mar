@@ -148,8 +148,7 @@ const userSchema = new mongoose.Schema({
     }],
     website: {
         type: Array,
-        required: false,
-        default:""
+        required: false
     },
     work_experience: [{
         companyName: {
