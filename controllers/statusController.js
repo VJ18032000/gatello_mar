@@ -5,7 +5,7 @@ const createStatus = (req, res, next) => {
 
     const post = new Status({
         user_id: req.body.user_id,
-        caption:req.body.caption,
+        caption: req.body.caption,
         status_text: req.body.status_text,
         font_style: req.body.font_style,
         background_color: req.body.background_color,
@@ -15,31 +15,31 @@ const createStatus = (req, res, next) => {
         post.status_post = req.file.path
     }
     if (post.status_text || post.status_post) {
-        User.find({user_id:post.user_id})
-        .then(result=>{
-            post.profile_url=result[0].profile_url
-            post.username=result[0].username
-            post.save()
-            .then(status => {
-                const resdata = {
-                    "status": "OK",
-                    "message": "create status successfully",
-                    "result": status,
-                    "error": "{}"
-                }
-                res.json(resdata)
+        User.find({ user_id: post.user_id })
+            .then(result => {
+                post.profile_url = result[0].profile_url
+                post.username = result[0].username
+                post.save()
+                    .then(status => {
+                        const resdata = {
+                            "status": "OK",
+                            "message": "create status successfully",
+                            "result": status,
+                            "error": "{}"
+                        }
+                        res.json(resdata)
+                    })
+                    .catch(err => {
+                        const resdata = {
+                            "status": "ERROR",
+                            "message": "Something went wrong",
+                            "result": "{}",
+                            "error": err
+                        }
+                        res.json(resdata)
+                    })
             })
-            .catch(err => {
-                const resdata = {
-                    "status": "ERROR",
-                    "message": "Something went wrong",
-                    "result": "{}",
-                    "error": err
-                }
-                res.json(resdata)
-            })
-        })
-       
+
     } else {
         const resdata = {
             "status": "ERROR",
@@ -80,39 +80,43 @@ const deletelStatus = (req, res, next) => {
 const userviewStatus = (req, res, next) => {
     var id = req.body.user_id
     var status_id = req.body.status_id
-
     Status.findById({ _id: status_id })
         .then(status => {
-            if (status.status_post) {
+            Status.find({$and:[{_id: status_id},{"view_details.viewed_by":id}]})
+            .then(data=>{
+               if (data==0) {
+                status.view_details.push({ viewed_by: id, viewed_time: Date.now() })
+                status.save()
                 const resdata = {
                     "status": "OK",
-                    "message": "status_post viewed succesfully",
+                    "message": "succesfully",
                     "result": "{}",
                     "error": "{}"
                 }
                 res.json(resdata)
             } else {
-                const resdata = {
-                    "status": "OK",
-                    "message": "status_text viewed successfully",
-                    "result": "{}",
-                    "error": "{}"
-                }
-                res.json(resdata)
+                data[0].view_details.forEach((e,index)=>{
+                    if(e.viewed_by==id){
+                        status.view_details[index].view_count +=1;
+                        status.save()
+                        const resdata = {
+                            "status": "OK",
+                            "message": "+1 succesfully",
+                            "result": "{}",
+                            "error": "{}"
+                        }
+                        res.json(resdata)
+                    }
+                })
             }
-            if (status.user_id !== id) {
-                status.view_details.push({ viewed_by: id, viewed_time: Date.now() })
-                status.save()
-                console.log("successfully Viewed")
-            }
-
-            // if (status.view_details.indexOf(id) !== -1) {
-            //     console.log("already Viewed")
-            // } else {
-            //     status.view_details.push(id)
+            })
+            
+            // if (status.user_id !== id) {
+            //     status.view_details.push({ viewed_by: id, viewed_time: Date.now() })
             //     status.save()
             //     console.log("successfully Viewed")
-            // }
+            // }   
+              
         })
         .catch(err => {
             const resdata = {
@@ -166,26 +170,26 @@ const allstatusDetails = (req, res, next) => {
     Status.find({ user_id: id }).limit(-1)
         .then(user1 => {
             console.log(user1[0].user_id);
-        var user= []
-        for (var i = 0; i < id.length; i++) {
-            Status.find({ user_id: id[i]})
-                .then(result => {
-                    if (result != 0) {
-                        let user_id=result[0].user_id;
-                        user.push(result)
-                    }
-                }) 
-        }
-        setTimeout(() => {
-        // console.log(user[0].find(user1[0].user_id))
-            const resdata = {
-                "status": "OK",
-                "message": "status",
-                "result":user,
-                "error":"{}"
+            var user = []
+            for (var i = 0; i < id.length; i++) {
+                Status.find({ user_id: id[i] })
+                    .then(result => {
+                        if (result != 0) {
+                            let user_id = result[0].user_id;
+                            user.push(result)
+                        }
+                    })
             }
-            res.json(resdata)
-        }, 1000); 
+            setTimeout(() => {
+                // console.log(user[0].find(user1[0].user_id))
+                const resdata = {
+                    "status": "OK",
+                    "message": "status",
+                    "result": user,
+                    "error": "{}"
+                }
+                res.json(resdata)
+            }, 1000);
         })
         .catch(err => {
             const resdata = {
@@ -198,19 +202,28 @@ const allstatusDetails = (req, res, next) => {
         })
 
 
-       
 
-  
+
+
 }
 
-const statusDeails = (req, res, next) => {
+const statusDetails = (req, res, next) => {
     var id = req.body.user_id
+    var newdata = []
+    const count = {};
     Status.find({ user_id: id })
         .then(status => {
+            for (i = 0; i < status[0].view_details.length; i++) {
+                newdata.push(status[0].view_details[i].viewed_by)
+            }
+            newdata.forEach(element => {
+                count[element] = (count[element] || 0) + 1;
+            });
+            console.log(count)
             const resdata = {
                 "status": status != 0 ? "OK" : "ERROR",
                 "message": status != 0 ? "Status successfully Viewed" : "No status available",
-                "result": status != 0 ? status : "{}",
+                "result": status != 0 ? { status, count } : "{}",
                 "error": status != 0 ? `{}` : "Please check user_id"
             }
             res.json(resdata)
@@ -231,7 +244,7 @@ module.exports = {
     deletelStatus,
     userviewStatus,
     allstatusDetails,
-    statusDeails
+    statusDetails
 }
 
 
